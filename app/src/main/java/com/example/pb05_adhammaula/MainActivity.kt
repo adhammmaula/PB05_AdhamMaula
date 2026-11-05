@@ -39,8 +39,7 @@ fun AppNavigation() {
         startDestination = Screen.Home
     ) {
         composable<Screen.Home> {
-            HomeScreen(
-                courses = CourseRepository.courses,
+            HomeRoute(
                 onCourseClick = { id -> navController.navigate(Screen.Detail(id)) },
                 onAddClick = { navController.navigate(Screen.Form(-1)) }
             )
