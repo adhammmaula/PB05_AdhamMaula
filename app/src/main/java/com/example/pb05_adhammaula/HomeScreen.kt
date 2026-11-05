@@ -6,9 +6,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -16,29 +17,29 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    courses: List<Course>,
+    uiState: CourseUiState,
+    onSearchQueryChange: (String) -> Unit,
+    onFilterChange: (String) -> Unit,
+    onResetClick: () -> Unit,
     onCourseClick: (Int) -> Unit,
     onAddClick: () -> Unit
 ) {
-    var searchQuery by remember { mutableStateOf("") }
-
-    // Filter daftar mata kuliah berdasarkan query pencarian (Kode atau Nama)
-    val filteredCourses = remember(searchQuery, courses) {
-        if (searchQuery.isBlank()) {
-            courses
-        } else {
-            courses.filter {
-                it.code.contains(searchQuery, ignoreCase = true) ||
-                        it.name.contains(searchQuery, ignoreCase = true)
-            }
+    val filteredCourses = uiState.courses.filter { course ->
+        val matchesQuery = course.code.contains(uiState.searchQuery, ignoreCase = true) ||
+                course.name.contains(uiState.searchQuery, ignoreCase = true)
+        val matchesFilter = when (uiState.selectedClassFilter) {
+            "IF24A" -> course.code.equals("IF24A", ignoreCase = true)
+            "IF24H" -> course.code.equals("IF24H", ignoreCase = true)
+            else -> true
         }
+        matchesQuery && matchesFilter
     }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Katalog Mata Kuliah") }) },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddClick) {
-                Icon(Icons.Default.Add, contentDescription = "Tambah Mata Kuliah")
+                Icon(Icons.Default.Add, contentDescription = "Tambah")
             }
         }
     ) { innerPadding ->
@@ -47,30 +48,66 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // OutlinedTextField untuk fitur Pencarian
             OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
+                value = uiState.searchQuery,
+                onValueChange = onSearchQueryChange,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text("Cari kode (IF24A/IF24H) atau matkul...") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Cari") },
+                placeholder = { Text("Cari kode/nama matkul...") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                trailingIcon = {
+                    if (uiState.searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { onSearchQueryChange("") }) {
+                            Icon(Icons.Default.Clear, contentDescription = "Clear")
+                        }
+                    }
+                },
                 singleLine = true
             )
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = uiState.selectedClassFilter == "ALL",
+                    onClick = { onFilterChange("ALL") },
+                    label = { Text("Semua") }
+                )
+                FilterChip(
+                    selected = uiState.selectedClassFilter == "IF24A",
+                    onClick = { onFilterChange("IF24A") },
+                    label = { Text("IF24A") }
+                )
+                FilterChip(
+                    selected = uiState.selectedClassFilter == "IF24H",
+                    onClick = { onFilterChange("IF24H") },
+                    label = { Text("IF24H") }
+                )
+                TextButton(onClick = onResetClick) {
+                    Text("Reset")
+                }
+            }
+
+            // Handling Non-Happy Path (Empty State)
             if (filteredCourses.isEmpty()) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Mata kuliah tidak ditemukan",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "Mata kuliah tidak ditemukan",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Button(onClick = onResetClick) {
+                            Text("Reset Filter")
+                        }
+                    }
                 }
             } else {
                 LazyColumn(
@@ -90,21 +127,11 @@ fun HomeScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text(
-                                        text = course.code,
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                    Text(
-                                        text = "${course.sks} SKS",
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
+                                    Text(course.code, color = MaterialTheme.colorScheme.primary)
+                                    Text("${course.sks} SKS")
                                 }
                                 Spacer(Modifier.height(4.dp))
-                                Text(
-                                    text = course.name,
-                                    style = MaterialTheme.typography.titleMedium
-                                )
+                                Text(course.name, style = MaterialTheme.typography.titleMedium)
                             }
                         }
                     }
