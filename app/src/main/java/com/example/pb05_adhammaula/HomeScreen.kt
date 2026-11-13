@@ -7,12 +7,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.pb05_adhammaula.data.local.entity.CourseEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -20,6 +23,7 @@ fun HomeScreen(
     uiState: CourseUiState,
     onSearchQueryChange: (String) -> Unit,
     onFilterChange: (String) -> Unit,
+    onDarkModeToggle: (Boolean) -> Unit,
     onResetClick: () -> Unit,
     onCourseClick: (Int) -> Unit,
     onAddClick: () -> Unit
@@ -36,7 +40,19 @@ fun HomeScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Katalog Mata Kuliah") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Katalog Mata Kuliah") },
+                actions = {
+                    IconButton(onClick = { onDarkModeToggle(!uiState.isDarkMode) }) {
+                        Icon(
+                            imageVector = if (uiState.isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
+                            contentDescription = if (uiState.isDarkMode) "Light Mode" else "Dark Mode"
+                        )
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddClick) {
                 Icon(Icons.Default.Add, contentDescription = "Tambah")
@@ -70,7 +86,8 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 FilterChip(
                     selected = uiState.selectedClassFilter == "ALL",

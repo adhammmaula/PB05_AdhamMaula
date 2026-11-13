@@ -9,11 +9,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.pb05_adhammaula.data.local.entity.CourseEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FormScreen(
-    course: Course?,
+    course: CourseEntity?,
     onSaveClick: (code: String, name: String, sks: Int, desc: String) -> Unit,
     onCancelClick: () -> Unit
 ) {
